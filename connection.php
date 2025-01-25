@@ -1,10 +1,19 @@
 <?php
 
-    $servername="localhost";
-    $user="root";
-    $password="";
-    $dbname="e_journal";
+// Данни за връзка с базата данни
+$servername = "localhost"; // Име на сървъра (локален хост за локална разработка)
+$username = "root"; // Потребителско име за достъп до базата данни (по подразбиране за MySQL)
+$password = ""; // Парола за достъп (празно по подразбиране при локална инсталация)
+$dbname = "e_journal"; // Име на базата данни, която ще се използва
 
-    $conn = new mysqli($servername, $user, $password, $dbname);
+// Създаване на връзка с базата данни
+$conn = new mysqli($servername, $username, $password, $dbname);
 
+// Проверка за грешки при свързване
+if ($conn->connect_error) {
+    // Ако има грешка, скриптът прекъсва и се показва съобщение
+    die("Грешка при свързване с базата данни: " . $conn->connect_error);
+}
+
+// Ако няма грешка, връзката е успешна и може да се използва
 ?>

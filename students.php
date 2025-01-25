@@ -2,20 +2,44 @@
 
   include "login.php";
   include "functions.php";
+  include "header.php";
 
-  if(isset($_POST['add_grade'])){
-    $grades = mysqli_fetch_assoc(mysqli_query($conn, "select * from students where id=".$_GET['id']." and class_id=".$_GET['class_id'].""))[$_POST['subject']];
-    if($grades != '' || $grades != null){
-      $grades .= " " . $_POST['grades'];
-      $update = "update students set ".$_POST['subject']."="."'"."".$grades.""."'"." where id=".$_GET['id']." and class_id=".$_GET['class_id']."";
-      $conn->query($update);
-      header("location:?id=".$_GET['id']."&class_id=".$_GET['class_id']."");
+  if (isset($_POST['add_grade'])) {
+    require "connection.php";
+
+    // Извличане на параметрите от формуляра
+    $student_id = intval($_GET['id']);
+    $class_id = intval($_GET['class_id']);
+    $subject = $_POST['subject']; // bel, maths или english
+    $new_grade = intval($_POST['grades']); // Новата оценка
+
+    // Извличане на текущите оценки
+    $query = "SELECT $subject FROM students WHERE id=$student_id AND class_id=$class_id";
+    $result = mysqli_query($conn, $query);
+
+    if ($result && mysqli_num_rows($result) > 0) {
+        $row = mysqli_fetch_assoc($result);
+        $current_grades = $row[$subject];
+
+        // Добавяне на новата оценка
+        if (!empty($current_grades)) {
+            $updated_grades = $current_grades . " " . $new_grade;
+        } else {
+            $updated_grades = (string)$new_grade;
+        }
+
+        // Обновяване на базата данни
+        $update_query = "UPDATE students SET $subject = '$updated_grades' WHERE id=$student_id AND class_id=$class_id";
+        if (mysqli_query($conn, $update_query)) {
+            header("Location: ?id=$student_id&class_id=$class_id"); // Презареждане на страницата
+            exit;
+        } else {
+            echo "Грешка при обновяване: " . mysqli_error($conn);
+        }
     } else {
-      $update = "update students set ".$_POST['subject']."="."'"."".$_POST['grades'].""."'"." where id=".$_GET['id']." and class_id=".$_GET['class_id']."";
-      $conn->query($update);
-      header("location:?id=".$_GET['id']."&class_id=".$_GET['class_id']."");
+        echo "Грешка: Ученикът не беше намерен.";
     }
-  }
+}
 
   if(isset($_POST['add_skip'])){
     $skips = mysqli_fetch_assoc(mysqli_query($conn, "select * from students where id=".$_GET['id']." and class_id=".$_GET['class_id'].""))["classes_skipped_".$_POST['skips_subject']];
@@ -36,48 +60,12 @@
     header("location:?id=".$_GET['id']."&class_id=".$_GET['class_id']."");
     }
   }
-
-
-
 ?>
-
-<!doctype html>
-<html lang="en" data-bs-theme="auto">
-
-<head>
-  <script src="../assets/js/color-modes.js"></script>
-
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="">
-  <meta name="author" content="Mark Otto, Jacob Thornton, and Bootstrap contributors">
-  <meta name="generator" content="Hugo 0.111.3">
-  <title>Електронен дневник</title>
-
-  <link rel="canonical" href="https://getbootstrap.com/docs/5.3/examples/album/">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha3/dist/css/bootstrap.min.css" rel="stylesheet"
-    integrity="sha384-KK94CHFLLe+nY2dmCWGMq91rCGa5gtU4mk92HdvYe+M/SXH301p5ILy+dN9+nJOZ" crossorigin="anonymous">
-  <link href="../assets/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.4/font/bootstrap-icons.css">
-
-  <style>
-    table,
-    th,
-    td {
-      border: 1px solid lightgray;
-    }
-  </style>
-
-</head>
-
-<body>
-
-  <?php include "header.php"; ?>
 
   <div class="container-fluid">
     <main class="d-flex flex-column text-center mx-5">
       <br>
-      <h2 class="">Разглеждате оценките на : <em>
+      <h2 class="">Разглеждате оценките на: <em>
           <?php
             require "connection.php";
             $res = mysqli_query($conn, 'select * from students where id='.$_GET['id'].' and class_id='.$_GET['class_id'].'');
@@ -124,8 +112,6 @@
           <th scope="col">БЕЛ</th>
           <th scope="col">МАТЕМАТИКА</th>
           <th scope="col">АНГЛИЙСКИ</th>
-          <!-- <th scope="col">ОТСЪСТВИЯ</th>
-          <th scope="col">УСПЕХ</th> -->
         </tr>
       </thead>
       <tbody>
